@@ -1,0 +1,228 @@
+#!/usr/bin/env bash
+
+set -e
+
+function main()
+{
+  TITLE="aws-s3-pg-restore"
+  USAGE="usage: ${TITLE} [-h|--help] BUCKET SOURCE DESTINATION"
+  process-arguments "${@}"
+  use-python
+  use-aws
+  use-postgres
+  aws-s3-find-object
+  aws-s3-fetch-object
+  pg-reset
+  pg-init
+  tar-extract
+  pg-configure
+  pg-start
+  pg-dump
+  pg-stop
+  pg-drop
+  pg-create
+  pg-restore
+  rails-db-environment-set
+}
+
+function process-arguments()
+{
+  ARGUMENTS=()
+  while [[ "${#}" -gt 0 ]]; do
+    case "${1}" in
+      -h|--help)
+        print "${USAGE}"
+        exit
+        ;;
+      -*)
+        error "Invalid option: ${1}"
+        error "${USAGE}"
+        exit 1
+        ;;
+      *)
+        ARGUMENTS+=("${1}")
+        ;;
+    esac
+    shift
+  done
+  if [[ "${#ARGUMENTS[@]}" -lt 3 ]]; then
+    error "${TITLE} requires a BUCKET, SOURCE, and DESTINATION"
+    error "${USAGE}"
+    exit 1
+  fi
+  BUCKET="${ARGUMENTS[0]}"
+  PREFIX="${ARGUMENTS[1]}"
+  DESTINATION="${ARGUMENTS[2]}"
+}
+
+function use-python()
+{
+  if ! python --version &> /dev/null; then
+    error "Python is not installed."
+    error "Visit https://www.python.org/about/gettingstarted/ to install Python."
+    exit 1
+  fi
+  print "Using: $(python --version 2>&1)"
+}
+
+function use-aws()
+{
+  if ! aws --version &> /dev/null; then
+    error "AWS CLI is not installed."
+    print "Installing AWS CLI..."
+    pip install --upgrade --user awscli
+  fi
+  print "Using: $(aws --version 2>&1)"
+}
+
+function use-postgres()
+{
+  if ! postgres --version &> /dev/null; then
+    error "PostgreSQL is not installed."
+    error "Visit https://www.postgresql.org/download/ to install PostgreSQL."
+    exit 1
+  fi
+  print "Using: $(postgres --version)"
+}
+
+function aws()
+{
+  python -m awscli "${@}"
+}
+
+function aws-s3-find-object()
+{
+  print "Finding latest database backup..."
+  print "  s3://${BUCKET}/${PREFIX}* -> ..."
+  KEY="$(aws-s3-list-objects | awk '{ print $NF }')"
+  print "Found latest databse backup:"
+  print "  s3://${BUCKET}/${PREFIX}* -> s3://${BUCKET}/${KEY}"
+  BASE="$(basename -s .tgz "${KEY}")"
+  TMP="/tmp/${BASE}"
+  TGZ="/tmp/${BASE}.tgz"
+  SQL="/tmp/${BASE}.sql"
+  LOG="/tmp/${BASE}.log"
+  SOURCE="$(cut -d - -f 1 <<< "${BASE}")"
+  TIMESTAMP="$(cut -d - -f 2 <<< "${BASE}")"
+  PGDATA="/tmp/${BASE}/var/lib/barman/${SOURCE}/base/${TIMESTAMP}/data"
+}
+
+function aws-s3-list-objects()
+{
+  aws s3api list-objects --bucket "${BUCKET}" --prefix "${PREFIX}" --query 'Contents[].Key' --output text
+}
+
+function aws-s3-fetch-object()
+{
+  if [[ -f "${TGZ}" ]]; then
+    print "Already fetched latest database backup:"
+    print "  s3://${BUCKET}/${KEY} -> ${TGZ}"
+  else
+    print "Fetching latest database backup..."
+    print "  s3://${BUCKET}/${KEY} -> ${TGZ}"
+    aws s3api get-object --bucket "${BUCKET}" --key "${KEY}" "${TGZ}"
+  fi
+}
+
+function pg-reset()
+{
+  if [[ -d "${PGDATA}" ]]; then
+    print "Already initialized temporary database:"
+    print "  ${PGDATA}"
+    if pg-status; then
+      pg-stop
+    fi
+    print "Resetting temporary database..."
+    print "  ${PGDATA}"
+    rm -r "${PGDATA}"
+  fi
+}
+
+function pg-status()
+{
+  print "Polling temporary database server..."
+  pg_ctl --pgdata="${PGDATA}" status
+}
+
+function pg-init()
+{
+  print "Initializing temporary database..."
+  initdb --pgdata="${PGDATA}"
+}
+
+function tar-extract()
+{
+  print "Extracting latest database backup..."
+  print "  ${TGZ} -> ${PGDATA}"
+  tar xf "${TGZ}" -C "${TMP}"
+}
+
+function pg-configure()
+{
+  print "Configuring temporary database..."
+  rm "${PGDATA}/backup_label"
+  pg_resetxlog -f "${PGDATA}"
+}
+
+function pg-start()
+{
+  print "Starting temporary database server..."
+  pg_ctl --pgdata="${PGDATA}" -w start -o "-p 7432"
+}
+
+function pg-dump()
+{
+  print "Dumping latest database backup..."
+  print "  postgresql://postgres@localhost:7432/${SOURCE} -> ${SQL}"
+  pg_dump --username=postgres --port=7432 "${SOURCE}" > "${SQL}"
+}
+
+function pg-stop()
+{
+  print "Stopping temporary database server..."
+  pg_ctl --pgdata="${PGDATA}" -w stop
+}
+
+function pg-drop()
+{
+  print "Dropping database..."
+  print "  postgresql://${USER}@localhost:5432/${DESTINATION}"
+  dropdb "${DESTINATION}"
+}
+
+function pg-create()
+{
+  print "Creating database..."
+  print "  postgresql://${USER}@localhost:5432/${DESTINATION}"
+  createdb "${DESTINATION}"
+}
+
+function pg-restore()
+{
+  print "Restoring latest database backup..."
+  print "  ${SQL} -> postgresql://${USER}@localhost:5432/${DESTINATION}"
+  psql "${DESTINATION}" < "${SQL}" > "${LOG}"
+}
+
+function rails-db-environment-set()
+{
+  if bin/rails --version &> /dev/null; then
+    print "Using: $(bin/rails --version)"
+    print "Setting Rails database environment..."
+    bin/rails db:environment:set
+  fi
+}
+
+function print()
+{
+  printf "\e[0;1m[\e[0;1;32m${TITLE}\e[0;1m]\e[0m " >&2
+  echo "${@}" >&2
+}
+
+function error()
+{
+  printf "\e[0;1m[\e[0;1;31m${TITLE}\e[0;1m]\e[0m " >&2
+  echo "${@}" >&2
+}
+
+main "${@}"
