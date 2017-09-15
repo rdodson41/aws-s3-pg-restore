@@ -23,7 +23,6 @@ function main()
   pg-drop
   pg-create
   pg-restore
-  rails-db-environment-set
 }
 
 function process-arguments()
@@ -263,15 +262,6 @@ function pg-restore()
   print "Restoring latest database backup..."
   print "  ${SQL} -> ${PGURL}"
   psql < "${SQL}" > "${LOG}"
-}
-
-function rails-db-environment-set()
-{
-  if bin/rails --version &> /dev/null; then
-    print "Using: $(bin/rails --version)"
-    print "Setting Rails database environment..."
-    bin/rails db:environment:set
-  fi
 }
 
 function print()
