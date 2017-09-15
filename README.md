@@ -42,9 +42,9 @@ Restore a production Barman database backup to your local development environmen
 
     $ aws-s3-pg-restore my-db-backups my_app_production my_app_development
 
-If your production database uses a different version of PostgreSQL than your local development environment, then you will need to install the production version in addition to your development version and include it in your PATH:
+If your production database uses a different version of PostgreSQL than your local development environment, then you will need to install the production version in addition to your development version and include it in your `PATH`:
 
-    $ PATH="/usr/local/opt/postgresql@9.4/bin:$PATH" aws-s3-pg-restore my-db-backups my_app_production my_app_development
+    $ PATH="/usr/local/opt/postgresql@9.4/bin:${PATH}" aws-s3-pg-restore my-db-backups my_app_production my_app_development
 
 **aws-s3-pg-restore** responds to PostgreSQL environment variables `PGUSER`, `PGHOST`, and `PGPORT`:
 
