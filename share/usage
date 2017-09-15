@@ -1,0 +1,9 @@
+Usage: make COMMAND
+
+Commands:
+  help       Print usage
+  install    Install aws-s3-pg-restore to /usr/local/bin
+  uninstall  Uninstall aws-s3-pg-restore
+  reinstall  Reinstall aws-s3-pg-restore
+  pull       Pull changes from origin
+  update     Update aws-s3-pg-restore

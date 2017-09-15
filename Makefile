@@ -6,7 +6,7 @@ root-bin-all = $(patsubst $(bin)/%,$(root-bin)/%,$(bin-all))
 
 .PHONY: help
 help:
-	@echo "usage: make [ help | install | uninstall | reinstall | pull | update ]" >&2
+	@cat share/usage >&2
 
 .PHONY: install
 install: $(root-bin-all)

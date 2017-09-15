@@ -1,6 +1,6 @@
 # aws-s3-pg-restore
 
-**aws-s3-pg-restore** is a utility which restores production Barman database backups to your local development environment.
+A utility which restores production Barman database backups to your local development environment.
 
 ## Installation
 
@@ -12,15 +12,15 @@ Clone this repository:
 
     $ git clone https://github.com/rdodson41/aws-s3-pg-restore.git
 
-Navigate to the local copy of this repository:
+Navigate to your local copy of this repository:
 
     $ cd aws-s3-pg-restore
 
-Use `make install` to install `aws-s3-pg-restore` to `/usr/local/bin`:
+Run `make install` to install `aws-s3-pg-restore` to `/usr/local/bin`:
 
     $ make install
 
-Use `make update` to update `aws-s3-pg-restore`:
+Run `make update` to update `aws-s3-pg-restore`:
 
     $ make update
 
@@ -38,13 +38,25 @@ You must configure the [AWS CLI][4] in order to use **aws-s3-pg-restore**.
 
 ## Usage
 
+Restore a production Barman database backup to your local development environment:
+
     $ aws-s3-pg-restore my-db-backups my_app_production my_app_development
 
-If your production database uses a different version of PostgreSQL than your local development environment, then you will need to install the production version in addition to your development version and include it in your PATH:
+If your production database uses a different version of PostgreSQL than your local development environment, then you will need to install the production version in addition to your development version and include it in your `PATH`:
 
-    $ PATH="/usr/local/opt/postgresql@9.4/bin:$PATH" aws-s3-pg-restore my-db-backups my_app_production my_app_development
+    $ PATH="/usr/local/opt/postgresql@9.4/bin:${PATH}" aws-s3-pg-restore my-db-backups my_app_production my_app_development
 
-If your application uses Rails, then **aws-s3-pg-restore** will attempt to run `bin/rake db:environment:set` after it restores the production database to your local development environment.
+**aws-s3-pg-restore** responds to PostgreSQL environment variables `PGUSER`, `PGHOST`, and `PGPORT`:
+
+    $ PGUSER=postgres aws-s3-pg-restore my-db-backups my_app_production my_app_development
+
+See PostgreSQL documentation section [32.14. Environment Variables][5] for additional details.
+
+  [5]: <https://www.postgresql.org/docs/9.6/static/libpq-envars.html> "PostgreSQL Environment Variables"
+
+These connection options may be set or overridden via command line options `--user USER`, `--host HOST`, and `--port PORT`, respectively:
+
+    $ aws-s3-pg-restore --host localhost --port 32774 my-db-backups my_app_production my_app_development
 
 ## Uninstallation
 
@@ -58,6 +70,6 @@ Use `make uninstall` to uninstall `aws-s3-pg-restore`:
 
 ## License
 
-  [The MIT License (MIT)][5]
+  [The MIT License (MIT)][6]
 
-  [5]: <https://opensource.org/licenses/MIT> "The MIT License (MIT)"
+  [6]: <https://opensource.org/licenses/MIT> "The MIT License (MIT)"
