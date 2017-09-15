@@ -8,6 +8,7 @@ function main()
   USAGE="usage: ${TITLE} [-h|--help] BUCKET SOURCE DESTINATION"
   process-arguments "${@}"
   use-python
+  use-pip
   use-aws
   use-postgres
   aws-s3-find-object
@@ -57,12 +58,33 @@ function process-arguments()
 
 function use-python()
 {
+  if python3 --version &> /dev/null; then
+    function python()
+    {
+      python3 "${@}"
+    }
+  elif python2 --version &> /dev/null; then
+    function python()
+    {
+      python2 "${@}"
+    }
+  fi
   if ! python --version &> /dev/null; then
     error "Python is not installed."
     error "Visit https://www.python.org/about/gettingstarted/ to install Python."
     exit 1
   fi
   print "Using: $(python --version 2>&1)"
+}
+
+function use-pip()
+{
+  if ! pip --version &> /dev/null; then
+    error "pip is not installed."
+    error "Visit https://pip.pypa.io/en/stable/installing/ to install pip."
+    exit 1
+  fi
+  print "Using: $(pip --version)"
 }
 
 function use-aws()
@@ -83,6 +105,11 @@ function use-postgres()
     exit 1
   fi
   print "Using: $(postgres --version)"
+}
+
+function pip()
+{
+  python -m pip "${@}"
 }
 
 function aws()
