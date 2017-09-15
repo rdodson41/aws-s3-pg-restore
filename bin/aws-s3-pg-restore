@@ -5,7 +5,7 @@ set -e
 function main()
 {
   TITLE="aws-s3-pg-restore"
-  USAGE="usage: ${TITLE} [-h|--help] BUCKET SOURCE DESTINATION"
+  USAGE="usage: ${TITLE} [-h|--help] [-u|--user USER] [-h|--host HOST] [-p|--port PORT] BUCKET SOURCE DESTINATION"
   process-arguments "${@}"
   use-python
   use-pip
@@ -31,9 +31,36 @@ function process-arguments()
   ARGUMENTS=()
   while [[ "${#}" -gt 0 ]]; do
     case "${1}" in
-      -h|--help)
+      --help)
         print "${USAGE}"
         exit
+        ;;
+      -u|--user)
+        if [[ "${#}" -lt 2 ]]; then
+          error "${1} requires a USER"
+          error "${USAGE}"
+          exit 1
+        fi
+        export PGUSER="${2}"
+        shift
+        ;;
+      -h|--host)
+        if [[ "${#}" -lt 2 ]]; then
+          error "${1} requires a HOST"
+          error "${USAGE}"
+          exit 1
+        fi
+        export PGHOST="${2}"
+        shift
+        ;;
+      -p|--port)
+        if [[ "${#}" -lt 2 ]]; then
+          error "${1} requires a PORT"
+          error "${USAGE}"
+          exit 1
+        fi
+        export PGPORT="${2}"
+        shift
         ;;
       -*)
         error "Invalid option: ${1}"
@@ -53,7 +80,14 @@ function process-arguments()
   fi
   BUCKET="${ARGUMENTS[0]}"
   PREFIX="${ARGUMENTS[1]}"
-  DESTINATION="${ARGUMENTS[2]}"
+  export PGDATABASE="${ARGUMENTS[2]}"
+  if [[ -n "${PGHOST}" ]]; then
+    export PGPORT="${PGPORT:-5432}"
+  fi
+  if [[ -n "${PGPORT}" ]]; then
+    export PGHOST="${PGHOST:-localhost}"
+  fi
+  PGURL="postgresql://${PGUSER:-${USER}}@${PGHOST:-localhost}:${PGPORT:-5432}/${PGDATABASE}"
 }
 
 function use-python()
@@ -213,22 +247,22 @@ function pg-stop()
 function pg-drop()
 {
   print "Dropping database..."
-  print "  postgresql://${USER}@localhost:5432/${DESTINATION}"
-  dropdb "${DESTINATION}"
+  print "  ${PGURL}"
+  dropdb "${PGDATABASE}" 2> /dev/null || true
 }
 
 function pg-create()
 {
   print "Creating database..."
-  print "  postgresql://${USER}@localhost:5432/${DESTINATION}"
-  createdb "${DESTINATION}"
+  print "  ${PGURL}"
+  createdb
 }
 
 function pg-restore()
 {
   print "Restoring latest database backup..."
-  print "  ${SQL} -> postgresql://${USER}@localhost:5432/${DESTINATION}"
-  psql "${DESTINATION}" < "${SQL}" > "${LOG}"
+  print "  ${SQL} -> ${PGURL}"
+  psql < "${SQL}" > "${LOG}"
 }
 
 function rails-db-environment-set()
