@@ -8,7 +8,6 @@ function main()
   USAGE="usage: ${TITLE} [-h|--help] [-u|--user USER] [-h|--host HOST] [-p|--port PORT] BUCKET SOURCE DESTINATION"
   process-arguments "${@}"
   use-python
-  use-pip
   use-aws
   use-postgres
   aws-s3-find-object
@@ -125,6 +124,7 @@ function use-aws()
   if ! aws --version &> /dev/null; then
     error "AWS CLI is not installed."
     print "Installing AWS CLI..."
+    use-pip
     pip install --upgrade --user awscli
   fi
   print "Using: $(aws --version 2>&1)"
