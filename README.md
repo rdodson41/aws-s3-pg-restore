@@ -16,19 +16,11 @@ Navigate to your local copy of this repository:
 
     $ cd aws-s3-pg-restore
 
-Run `make` to print `Makefile` usage:
-
-    $ make
-
 Run `make install` to install `aws-s3-pg-restore` to `/usr/local/bin`:
 
     $ make install
 
-Run `make reinstall` to reinstall `aws-s3-pg-restore` to `/usr/local/bin`:
-
-    $ make reinstall
-
-Run `make update` to update `aws-s3-pg-restore` to `/usr/local/bin`:
+Run `make update` to update `aws-s3-pg-restore`:
 
     $ make update
 
@@ -72,7 +64,7 @@ Navigate to the local copy of this repository:
 
     $ cd /usr/local/opt/aws-s3-pg-restore
 
-Use `make uninstall` to uninstall `aws-s3-pg-restore` from `/usr/local/bin`:
+Use `make uninstall` to uninstall `aws-s3-pg-restore`:
 
     $ make uninstall
 
