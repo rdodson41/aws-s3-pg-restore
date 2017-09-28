@@ -19,8 +19,7 @@ function main()
   pg-start
   pg-dump
   pg-stop
-  pg-drop
-  pg-create
+  pg-db-reset
   pg-restore
 }
 
@@ -243,14 +242,30 @@ function pg-stop()
   pg_ctl --pgdata="${PGDATA}" -w stop
 }
 
-function pg-drop()
+function pg-db-reset()
 {
-  print "Dropping database..."
-  print "  ${PGURL}"
-  dropdb "${PGDATABASE}"
+  if pg-db-schema-drop; then
+    pg-db-schema-create
+  else
+    pg-db-create
+  fi
 }
 
-function pg-create()
+function pg-db-schema-drop()
+{
+  print "Dropping database schema..."
+  print "  ${PGURL}"
+  psql --command="DROP SCHEMA IF EXISTS public CASCADE"
+}
+
+function pg-db-schema-create()
+{
+  print "Creating database schema..."
+  print "  ${PGURL}"
+  psql --command="CREATE SCHEMA public"
+}
+
+function pg-db-create()
 {
   print "Creating database..."
   print "  ${PGURL}"
