@@ -20,7 +20,6 @@ function main()
   pg-dump
   pg-stop
   pg-drop
-  pg-create
   pg-restore
 }
 
@@ -245,23 +244,18 @@ function pg-stop()
 
 function pg-drop()
 {
-  print "Dropping database..."
+  print "Generating tables to drop..."
+  tables=$(psql -d "${PGDATABASE}" -t -c "select 'drop table \"' || tablename || '\" cascade;' from pg_tables where schemaname='public'")
+  print "Droping tables..."
   print "  ${PGURL}"
-  dropdb "${PGDATABASE}" 2> /dev/null || true
-}
-
-function pg-create()
-{
-  print "Creating database..."
-  print "  ${PGURL}"
-  createdb
+  psql -d "${PGDATABASE}" -c "${tables}"
 }
 
 function pg-restore()
 {
   print "Restoring latest database backup..."
   print "  ${SQL} -> ${PGURL}"
-  psql < "${SQL}" > "${LOG}"
+  psql ${PGDATABASE} < "${SQL}" > "${LOG}"
 }
 
 function print()
