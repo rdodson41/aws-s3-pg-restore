@@ -247,7 +247,7 @@ function pg-drop()
 {
   print "Dropping database..."
   print "  ${PGURL}"
-  dropdb "${PGDATABASE}" 2> /dev/null || true
+  dropdb "${PGDATABASE}"
 }
 
 function pg-create()
