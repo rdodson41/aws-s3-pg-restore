@@ -154,7 +154,7 @@ function aws-s3-find-object()
   print "Finding latest database backup..."
   print "  s3://${BUCKET}/${PREFIX}* -> ..."
   KEY="$(aws-s3-list-objects | awk '{ print $NF }')"
-  print "Found latest databse backup:"
+  print "Found latest database backup:"
   print "  s3://${BUCKET}/${PREFIX}* -> s3://${BUCKET}/${KEY}"
   BASE="$(basename -s .tgz "${KEY}")"
   TMP="/tmp/${BASE}"
