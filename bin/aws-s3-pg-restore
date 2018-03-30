@@ -5,7 +5,7 @@ set -e
 function main()
 {
   TITLE="aws-s3-pg-restore"
-  USAGE="Usage: ${TITLE} [-h|--help] [-u|--user USER] [-h|--host HOST] [-p|--port PORT] BUCKET SOURCE DESTINATION"
+  USAGE="Usage: ${TITLE} [--help] [-u|--user USER] [-h|--host HOST] [-p|--port PORT] BUCKET SOURCE DESTINATION"
   process-arguments "${@}"
   use-python
   use-aws
@@ -29,8 +29,7 @@ function process-arguments()
   while [[ "${#}" -gt 0 ]]; do
     case "${1}" in
       --help)
-        print "${USAGE}"
-        exit
+        help
         ;;
       -u|--user)
         if [[ "${#}" -lt 2 ]]; then
@@ -272,6 +271,12 @@ function pg-restore()
   print "Restoring latest database backup..."
   print "  ${SQL} -> ${PGURL}"
   psql < "${SQL}" > "${LOG}"
+}
+
+function help()
+{
+  print "${USAGE}"
+  exit
 }
 
 function usage()
