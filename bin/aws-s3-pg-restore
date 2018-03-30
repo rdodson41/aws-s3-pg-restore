@@ -5,7 +5,7 @@ set -e
 function main()
 {
   TITLE="aws-s3-pg-restore"
-  USAGE="usage: ${TITLE} [-h|--help] [-u|--user USER] [-h|--host HOST] [-p|--port PORT] BUCKET SOURCE DESTINATION"
+  USAGE="Usage: ${TITLE} [-h|--help] [-u|--user USER] [-h|--host HOST] [-p|--port PORT] BUCKET SOURCE DESTINATION"
   process-arguments "${@}"
   use-python
   use-aws
@@ -35,8 +35,7 @@ function process-arguments()
       -u|--user)
         if [[ "${#}" -lt 2 ]]; then
           error "${1} requires a USER"
-          error "${USAGE}"
-          exit 1
+          usage
         fi
         export PGUSER="${2}"
         shift
@@ -44,8 +43,7 @@ function process-arguments()
       -h|--host)
         if [[ "${#}" -lt 2 ]]; then
           error "${1} requires a HOST"
-          error "${USAGE}"
-          exit 1
+          usage
         fi
         export PGHOST="${2}"
         shift
@@ -53,16 +51,14 @@ function process-arguments()
       -p|--port)
         if [[ "${#}" -lt 2 ]]; then
           error "${1} requires a PORT"
-          error "${USAGE}"
-          exit 1
+          usage
         fi
         export PGPORT="${2}"
         shift
         ;;
       -*)
         error "Invalid option: ${1}"
-        error "${USAGE}"
-        exit 1
+        usage
         ;;
       *)
         ARGUMENTS+=("${1}")
@@ -72,8 +68,7 @@ function process-arguments()
   done
   if [[ "${#ARGUMENTS[@]}" -lt 3 ]]; then
     error "${TITLE} requires a BUCKET, SOURCE, and DESTINATION"
-    error "${USAGE}"
-    exit 1
+    usage
   fi
   BUCKET="${ARGUMENTS[0]}"
   PREFIX="${ARGUMENTS[1]}"
@@ -277,6 +272,12 @@ function pg-restore()
   print "Restoring latest database backup..."
   print "  ${SQL} -> ${PGURL}"
   psql < "${SQL}" > "${LOG}"
+}
+
+function usage()
+{
+  error "${USAGE}"
+  exit 1
 }
 
 function print()
