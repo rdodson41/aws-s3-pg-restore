@@ -29,41 +29,49 @@ function process-arguments()
   while [[ "${#}" -gt 0 ]]; do
     case "${1}" in
       --help)
+        shift
         help
         ;;
       -u|--user)
         if [[ "${#}" -lt 2 ]]; then
           error "${1} requires a USER"
+          shift
           usage
         fi
-        export PGUSER="${2}"
+        shift
+        export PGUSER="${1}"
         shift
         ;;
       -h|--host)
         if [[ "${#}" -lt 2 ]]; then
           error "${1} requires a HOST"
+          shift
           usage
         fi
-        export PGHOST="${2}"
+        shift
+        export PGHOST="${1}"
         shift
         ;;
       -p|--port)
         if [[ "${#}" -lt 2 ]]; then
           error "${1} requires a PORT"
+          shift
           usage
         fi
-        export PGPORT="${2}"
+        shift
+        export PGPORT="${1}"
         shift
         ;;
       -*)
         error "Invalid option: ${1}"
+        shift
         usage
         ;;
       *)
         ARGUMENTS+=("${1}")
+        shift
         ;;
     esac
-    shift
   done
   if [[ "${#ARGUMENTS[@]}" -lt 3 ]]; then
     error "${TITLE} requires a BUCKET, SOURCE, and DESTINATION"
